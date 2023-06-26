@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+import sys, os, argparse, pprint
+from ffmpeg import FFmpeg, Progress
+
+pp = pprint.PrettyPrinter(compact=True)
+
 video_start = 0
 effect_start = 3
 effect_end   = 6
@@ -8,19 +13,6 @@ repeat_frames = 15
 fps = 30
 
 output_directory = 'moshed_videos'
-
-
-		# here's the useful information if you're trying to adapt this into another programming language
-		# - convert the video to AVI format
-		# - designator for beginning of an i-frame: 0x0001B0
-		# - designator for the end of every frame type: 0x30306463 (usually referenced as ASCII 00dc)
-
-
-# now we get everything set up to make the video file
-
-# import makes other people's code libraries available to use in this code
-import sys, os, argparse, subprocess
-from ffmpeg import FFmpeg, Progress
 
 # this makes sure the video file exists. It is used below in the 'input_video' argparse
 def quit_if_no_video_file(video_file):
@@ -97,7 +89,7 @@ convertToAVI = (
 
 @convertToAVI.on("progress")
 def on_progress(progress: Progress):
-		print(progress)
+		pp.pprint(progress)
 
 convertToAVI.execute()
 
@@ -149,7 +141,7 @@ makeOutput = (
 
 @makeOutput.on("progress")
 def on_progress(progress: Progress):
-		print(progress)
+		pp.pprint(progress)
 
 makeOutput.execute()
 
