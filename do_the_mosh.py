@@ -20,19 +20,7 @@ output_directory = 'moshed_videos'
 # now we get everything set up to make the video file
 
 # import makes other people's code libraries available to use in this code
-import sys
-
-# This program was written for Python 3. Python 2 is similar but there are differences and this code won't work with it.
-# the argparse code library wasn't included in Python before 3.2 so those previous versions aren't supported.
-# If you're stuck with an older version of Python3 you could probably delete all the argparse stuff and it would work 
-# but the program would be less convenient to use
-if sys.version_info[0] != 3 or sys.version_info[1] < 2:
-	print('This version works with Python version 3.2 and above but not Python 2, sorry!')
-	sys.exit()
-
-import os
-import argparse
-import subprocess
+import sys, os, argparse, subprocess
 
 # this makes sure the video file exists. It is used below in the 'input_video' argparse
 def quit_if_no_video_file(video_file):
@@ -54,12 +42,12 @@ def confirm_output_directory(output_directory):
 parser = argparse.ArgumentParser() 
 
 parser.add_argument('input_video', type=quit_if_no_video_file, help="File to be moshed")
-parser.add_argument('--start_sec',        default = start_sec,        type=float, help="Time the video starts on the original footage's timeline. Trims preceding footage.")
-parser.add_argument('--end_sec',    	  default = end_sec,          type=float, help="Time on the original footage's time when it is trimmed.")
-parser.add_argument('--start_effect_sec', default = start_effect_sec, type=float, help="Time the effect starts on the trimmed footage's timeline. The output video can be much longer.")
-parser.add_argument('--end_effect_sec',   default = end_effect_sec,   type=float, help="Time the effect ends on the trimmed footage's timeline.")
-parser.add_argument('--repeat_p_frames',  default = repeat_p_frames,  type=int,   help="If this is set to 0 the result will only contain i-frames. Possibly only a single i-frame.")
-parser.add_argument('--output_width',     default = output_width,     type=int,   help="Width of output video in pixels. 480 is Twitter-friendly. Programs get real mad if a video is an odd number of pixels wide.")
+parser.add_argument('--video-start',        default = start_sec,        type=float, help="Time the video starts on the original footage's timeline. Trims preceding footage.")
+parser.add_argument('--video-end',    	  default = end_sec,          type=float, help="Time on the original footage's time when it is trimmed.")
+parser.add_argument('--effect-start', default = start_effect_sec, type=float, help="Time the effect starts on the trimmed footage's timeline. The output video can be much longer.")
+parser.add_argument('--effect-end',   default = end_effect_sec,   type=float, help="Time the effect ends on the trimmed footage's timeline.")
+parser.add_argument('--repeat-frames',  default = repeat_p_frames,  type=int,   help="If this is set to 0 the result will only contain i-frames. Possibly only a single i-frame.")
+parser.add_argument('--width',     default = output_width,     type=int,   help="Width of output video in pixels. 480 is Twitter-friendly. Programs get real mad if a video is an odd number of pixels wide.")
 parser.add_argument('--fps',              default = fps,              type=int,   help="The number of frames per second the initial video is converted to before moshing.")
 parser.add_argument('--output_dir',       default = output_directory, type=confirm_output_directory, help="Output directory")
 
@@ -164,69 +152,3 @@ subprocess.call('ffmpeg -loglevel error -y -i ' + output_avi + ' ' +
 # gets rid of the in-between files so they're not crudding up your system
 os.remove(input_avi)
 os.remove(output_avi)
-
-
-	##############################################################################################################
-	##############################################################################################################
-	##                                                                                                          ##
-	##                                              A bit of explanation                                        ##
-	##                                                                                                          ##
-	##      Datamoshing is a time honored glitching technique discovered by a hero of another era               ##
-	##      or perhaps a god. We'll never know who they were but they're probably really old now so             ##
-	##      say a prayer for them in your heart. Also consider donating your youthful blood so they             ##
-	##      can live forever on Peter Thiel's seastead paradise which is totally a good idea and not the        ##
-	##      crackpot idea of a sheltered, solipsistic man with access to billions of other people's dollars.    ##
-	##                                                                                                          ##
-	##      A common method of datamoshing uses Avidemux which tends to get crashy when you mess with the       ##
-	##      internals of video files. If that seems your more likely route to datamosh glory there are lots     ##
-	##      of good tutorials on the internet. Have fun, good luck, no I don't know which Avidemux version      ##
-	##      you should use.                                                                                     ##
-	##                                                                                                          ##
-	##      What's happening in the code below is that first your video file is converted to AVI format         ##
-	##      which is glitch friendly as it sort-of doesn't care if you delete frames from the middle            ##
-	##      willy-nilly (mp4 gets real mad if you delete stuff in a video file).                                ##
-	##                                                                                                          ##
-	##      There are 2 types of frames that we're dealing with: i-frames and p-frames.                         ##
-	##      I-frames (aka key frames) give a full frame's worth of information while p-frames are               ##
-	##      used to calculate the difference from frame to frame and avoid storing lots of                      ##
-	##      redundant frame information. A video can be entirely i-frames but the file size is much larger      ##
-	##      than setting an i-frame every 10 or 20 frames and making the rest p-frames.                         ##
-	##                                                                                                          ##
-	##      The first i-frame is the only one that's required and after that we use p-frames                    ##
-	##      to calculate from frame to frame. The encoding algorithm then makes inter-frame calculations        ##
-	##      and sometimes interesting effects happen.                                                           ##
-	##                                                                                                          ##
-	##      Initially datamoshing was just deleting the extra i-frames maybe smooshing some p-frames            ##
-	##      in from another video and seeing what you got. However the glitchers eventually grew bored of       ##
-	##      this and discovered if they repeated p-frames that the calculations would cause a blooming          ##
-	##      effect and the results were real rowdy. So that's what the repeat_p_frames variable does and        ##
-	##      that's why "it sounds like a dying printer"-@ksheely. Because we're repeating p-frames the video    ##
-	##      length may get much longer. At ((25fps - 1 i-frame)) * 15 or (24 * 15) a single second of           ##
-	##      24 frames turns into 360 frames which is (360 frames / 25 fps) = 14.4 seconds.                      ##
-	##                                                                                                          ##
-	##      After we're done mucking around with i-frames and p-frames the results are fed to ffmpeg            ##
-	##      which locks in the glitches and makes a twitter-ready video to share with your friends              ##
-	##      After you share about 10 of these you'll either be better friends with them or they'll stop         ##
-	##      acknowledging you and delete you from their social media lifestyle. You will then have more         ##
-	##      open slots for all your new good friends who enjoy datamoshing thus giving your peer group          ##
-	##      a common bond and sense of purpose as you continue the journey of life together, forever.           ##
-	##                                                                                                          ##
-	##############################################################################################################
-	##############################################################################################################
-
-
-######################################################################################################################
-######################################################################################################################
-######################################################################################################################
-
-     # the code was adapted from https://github.com/amgadani/Datamosh-python/blob/master/standard.py by @amgadani
-     # which was adapted from https://github.com/grampajoe/Autodatamosh/blob/master/autodatamosh.pl by @joefriedl
-
-     # Here comes the disclaimer. This code is under the MIT License. 
-     # Basically you can include this code in commercial or personal projects and you're welcome to edit the code.
-     # If it breaks anything it's not my fault and I don't have to help you fix the work computer you broke while 
-     # glitching on company time.
-     # Also I'm not obligated to help you fix or change the code but if your request is reasonable I probably will.
-     # For instance, demanding that I program the next Facebook for free would be an unreasonable request.
-
-
