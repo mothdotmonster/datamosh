@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 start_sec = 0
 start_effect_sec = 3
 end_effect_sec   = 6
@@ -111,7 +113,7 @@ except OSError:
 # convert original file to avi
 subprocess.call('ffmpeg -loglevel error -y -i ' + input_video + ' ' +
 				' -crf 0 -pix_fmt yuv420p -r ' + str(fps) + ' ' +
-				' -ss ' + str(start_sec) + ' -to ' + str(end_sec) + ' ' +
+				' -ss ' + str(start_sec) + ' -to ' + str(end_sec) + ' ' + '-force_key_frames ' + str(start_effect_sec) + ' ' +
 				input_avi, shell=True)
 
 # open up the new files so we can read and write bytes to them
